@@ -1,10 +1,11 @@
 ﻿import express from 'express';
-const authRouter = express.Router();
-import { isAuth, setAuth, delAuth } from '../controllers/authController.js';
+import { login, logout, isAuth } from '../controllers/authController.js';
+import { secure } from '../middleware/auth.js';
 
-authRouter.route('/').get(isAuth);
-authRouter.route('/').get(isAuth);
-authRouter.route('/').post(setAuth);
-authRouter.route('/:id').delete(delAuth);
+const authRouter = express.Router();
+
+authRouter.route('/login').post(login);
+authRouter.route('/logout').post(logout);
+authRouter.get('/me', secure, isAuth);
 
 export default authRouter;
