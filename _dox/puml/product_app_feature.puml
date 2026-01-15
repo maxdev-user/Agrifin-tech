@@ -1,0 +1,42 @@
+﻿' UML: 2025/09/25 (木) - Use Case: Product App Feature
+
+@startuml Product App Feature
+scale 1
+skinparam style strictuml
+skinparam DefaultFontName Arial Narrow
+skinparam DefaultFontSize 13
+skinparam DefaultFontStyle bold
+skinparam ArrowThickness 0.5
+skinparam ArrowColor #gray
+hide empty members
+title <size 20>Product Sales
+
+rectangle "Product App Feature" {
+  'Creating actors
+  actor loggedInUser
+  actor loggedOutUser
+  actor admin
+
+  'Adding extensions
+  loggedOutUser <|-- loggedInUser
+  loggedInUser <|-- admin
+
+  'Creating use cases of loged out user
+  loggedOutUser --right-> (Login)
+  (Login) <. (Register): includes
+
+  'Creating use cases of logged in user
+  loggedInUser --right-> (Logout)
+  loggedInUser --right-> (Search products)
+  loggedInUser --left-> (View my history)
+  loggedInUser --left-> (View my profile)
+  (Search products) .down.> (View product) : extend
+  (View product) .down.> (Buy product) : extends
+
+  'Creating use cases of admin
+  admin --down-> (Add product)
+  admin --down-> (Remove product)
+  admin --down-> (Edit product)
+}
+
+@enduml
