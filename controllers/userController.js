@@ -1,20 +1,6 @@
 ﻿import express from 'express';
 import bcrypt from 'bcryptjs';
-import jwt from 'jsonwebtoken';
 import pool from '../config/db.js';
-
-const cookieOptions = {
-  httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'Strict',
-  maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
-};
-
-const generateToken = (id) => {
-  return jwt.sign({id}, process.env.JWT_SECRET, {
-    expiresIn: '1d'
-  });
-};
 
 // @desc Get all users
 // @route GET /api/users
@@ -51,9 +37,6 @@ export const createUser = async (req, res) => {
     [name, email, hashedPassword, role]
   );
 
-  const token = generateToken(newUser.rows[0].id);
-  res.cookie('token', token, cookieOptions);
-
   res.status(201).json({user: newUser.rows[0]});
 };
 
@@ -81,8 +64,8 @@ export const getUser = async (req, res) => {
 // @access public
 export const updateUser = async (req, res) => {
   const {id} = req.params;
-  const {name, email, role} = req.body;
-  if (!id || !name || !email || !role) {
+  const {name, email, password, role} = req.body;
+  if (!id || !name || !email || !password || !role) {
     res.status(400);
     throw new Error('One or more required fields are missing!');
   }
@@ -93,13 +76,11 @@ export const updateUser = async (req, res) => {
     throw new Error('User not found!');
   }
 
+  const pwdhash = await bcrypt.hash(password, 10);
   const updatedUser = await pool.query(
-    'UPDATE users SET name = $2, email = $3, role = $4 WHERE id = $1 RETURNING id, name, email, role',
-    [id, name, email, role]
+    'UPDATE users SET name = $2, email = $3, password_hash = $4, role = $5 WHERE id = $1 RETURNING id, name, email, role',
+    [id, name, email, pwdhash, role]
   );
-
-  const token = generateToken(updatedUser.rows[0].id);
-  res.cookie('token', token, cookieOptions);
 
   res.status(202).json({user: updatedUser.rows[0]});
 };
