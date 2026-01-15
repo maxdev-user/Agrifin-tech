@@ -1,0 +1,28 @@
+﻿scale 1
+label Ethiopia [
+  {{mindmap
+  + Ethiopia
+  ++ Turmi
+  +++ Small Farmers
+  +++ Medium-Scale Farmers
+  +++ Services
+  +++ Repayment
+  ++++ Input Financing
+  +++++ Agricultural Inputs
+  +++++ Seeds
+  +++++ Fertilizer
+  +++++ Animal Feed
+  +++++ Technical Guidance
+  ++++ Farming Agreements
+  }}
+]
+label Stages [
+  {{wbs
+  + Stages
+  ++ Planing
+  ++ Growing
+  ++ Harvesting
+  ++ Post-Harvest
+  }}
+]
+Ethiopia <<-down->> Stages

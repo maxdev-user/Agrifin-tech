@@ -41,14 +41,14 @@ export const createUser = async (req, res) => {
 
   const userExists = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
   if (userExists.rows.length > 0) {
-    res.status(400);
+    res.status(403);
     throw new Error('User already exists!');
   }
 
   const hashedPassword = await bcrypt.hash(password, 10);
   const newUser = await pool.query(
-      'INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING id, name, email, role',
-      [name, email, hashedPassword, role]
+    'INSERT INTO users (name, email, password_hash, role) VALUES ($1, $2, $3, $4) RETURNING id, name, email, role',
+    [name, email, hashedPassword, role]
   );
 
   const token = generateToken(newUser.rows[0].id);
@@ -58,17 +58,18 @@ export const createUser = async (req, res) => {
 };
 
 // @desc Get user
-// @route GET /api/users
+// @route GET /api/user
 // @access public
 export const getUser = async (req, res) => {
-  const {name, email} = req.body;
-  if (!name || !email) {
+  const {id} = req.params;
+  if (!id) {
     res.status(400);
-    throw new Error('One or more required fields are missing!');
+    throw new Error('The required Id field is missing!');
   }
-  const theUser = await pool.query('SELECT * FROM users WHERE name = $1 AND email = $1', [name, email]);
+
+  const theUser = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
   if (theUser.rows.length == 0) {
-    res.status(400);
+    res.status(404);
     throw new Error('User not found!');
   }
 
@@ -78,15 +79,48 @@ export const getUser = async (req, res) => {
 // @desc Update user
 // @route PUT /api/users
 // @access public
-export const updateUser = (req, res) => {
-  // @TODO
-  res.status(202).json({message:`Update user for ${req.params.id}`});
+export const updateUser = async (req, res) => {
+  const {id} = req.params;
+  const {name, email, role} = req.body;
+  if (!id || !name || !email || !role) {
+    res.status(400);
+    throw new Error('One or more required fields are missing!');
+  }
+
+  const user = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
+  if (user.rows.length == 0) {
+    res.status(404);
+    throw new Error('User not found!');
+  }
+
+  const updatedUser = await pool.query(
+    'UPDATE users SET name = $2, email = $3, role = $4 WHERE id = $1 RETURNING id, name, email, role',
+    [id, name, email, role]
+  );
+
+  const token = generateToken(updatedUser.rows[0].id);
+  res.cookie('token', token, cookieOptions);
+
+  res.status(202).json({user: updatedUser.rows[0]});
 };
 
 // @desc Dete user
 // @route DELETE /api/users
 // @access public
-export const deleteUser = (req, res) => {
-  // TODO
-  res.status(203).json({message:`User deleted for ${req.params.id}`});
+export const deleteUser = async (req, res) => {
+  const {id} = req.params;
+  if (!id) {
+    res.status(400);
+    throw new Error('The required Id is missing!');
+  }
+
+  const user = await pool.query('SELECT * FROM users WHERE id = $1', [id]);
+  if (user.rows.length == 0) {
+    res.status(404);
+    throw new Errow('User not found!');
+  }
+
+  const deletedUser = await pool.query('DELETE FROM users WHERE id = $1 RETURNING name, email, role', [id]);
+
+  res.status(202).json({user: deletedUser.rows[0]});
 };
